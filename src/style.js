@@ -50,6 +50,7 @@
       zeroOneNumber: { number: true, min: 0, max: 1, unitless: true },
       nOneOneNumber: { number: true, min: -1, max: 1, unitless: true },
       nonNegativeInt: { number: true, min: 0, integer: true, unitless: true },
+      nonNegativeNumber: { number: true, min: 0, unitless: true },
       position: { enums: ['parent', 'origin'] },
       autoSize: { number: true, min: 0, enums: ['auto'] },
       number: { number: true },
@@ -197,6 +198,7 @@
       { name: 'haystack-radius', type: t.zeroOneNumber },
 
       // edge arrows
+      { name: 'edge-arrow-multiplier', type: t.nonNegativeNumber },
       { name: 'source-arrow-shape', type: t.arrowShape },
       { name: 'target-arrow-shape', type: t.arrowShape },
       { name: 'mid-source-arrow-shape', type: t.arrowShape },
@@ -388,6 +390,7 @@
           'pie-16-background-opacity': 1,
 
           // edge props
+          'edge-arrow-multiplier': 1,
           'source-arrow-shape': 'none',
           'mid-source-arrow-shape': 'none',
           'target-arrow-shape': 'none',

@@ -171,23 +171,23 @@
         var tgtPos = tgt._private.position;
         var srcPos = src._private.position;
 
-        var srcArW = self.getArrowWidth( style['width'].pxValue );
-        var srcArH = self.getArrowHeight( style['width'].pxValue );
+        var srcArW = self.getArrowWidth( edge );
+        var srcArH = self.getArrowHeight( edge );
 
         var tgtArW = srcArW;
         var tgtArH = srcArH;
 
         if(
           (
-            srcShape.roughCollide(x, y, rs.arrowStartX, rs.arrowStartY, srcArW, srcArH, [rs.arrowStartX - srcPos.x, rs.arrowStartY - srcPos.y], 0)
+            srcShape.roughCollide(x, y, rs.arrowStartXMid, rs.arrowStartY, srcArW, srcArH, [rs.arrowStartX - srcPos.x, rs.arrowStartY - srcPos.y], 0)
               && 
-            srcShape.collide(x, y, rs.arrowStartX, rs.arrowStartY, srcArW, srcArH, [rs.arrowStartX - srcPos.x, rs.arrowStartY - srcPos.y], 0)
+            srcShape.collide(     x, y, rs.arrowStartXMid, rs.arrowStartY, srcArW, srcArH, [rs.arrowStartX - srcPos.x, rs.arrowStartY - srcPos.y], 0)
           )
             ||
           (
-            tgtShape.roughCollide(x, y, rs.arrowEndX, rs.arrowEndY, tgtArW, tgtArH, [rs.arrowEndX - tgtPos.x, rs.arrowEndY - tgtPos.y], 0)
+            tgtShape.roughCollide(x, y, rs.arrowEndXMid, rs.arrowEndX, tgtArW, tgtArH, [rs.arrowEndX - tgtPos.x, rs.arrowEndY - tgtPos.y], 0)
               &&
-            tgtShape.collide(x, y, rs.arrowEndX, rs.arrowEndY, tgtArW, tgtArH, [rs.arrowEndX - tgtPos.x, rs.arrowEndY - tgtPos.y], 0)
+            tgtShape.collide(     x, y, rs.arrowEndXMid, rs.arrowEndY, tgtArW, tgtArH, [rs.arrowEndX - tgtPos.x, rs.arrowEndY - tgtPos.y], 0)
           )
         ){
           near.push( edge );
@@ -1193,8 +1193,8 @@
         var badAEnd = !$$.is.number( rs.arrowEndX ) || !$$.is.number( rs.arrowEndY );
 
         var minCpADistFactor = 3;
-        var arrowW = this.getArrowWidth( edge._private.style['width'].pxValue ) * CanvasRenderer.arrowShapeHeight;
-        var minCpADist = minCpADistFactor * arrowW;
+        var arrowH = this.getArrowHeight( edge ) * CanvasRenderer.arrowShapeHeight;
+        var minCpADist = minCpADistFactor * arrowH;
         var startACpDist = $$.math.distance( { x: rs.cp2x, y: rs.cp2y }, { x: rs.startX, y: rs.startY } );
         var closeStartACp = startACpDist < minCpADist;
         var endACpDist = $$.math.distance( { x: rs.cp2x, y: rs.cp2y }, { x: rs.endX, y: rs.endY } );
@@ -1351,6 +1351,14 @@
 
     var source = edge.source()[0];
     var target = edge.target()[0];
+
+    var srcArrowW = this.getDrawnArrowWidth( edge, 'source' );
+    var srcArrowH = this.getDrawnArrowHeight( edge, 'source' );
+    var tgtArrowW = this.getDrawnArrowWidth( edge, 'target' );
+    var tgtArrowH = this.getDrawnArrowHeight( edge, 'target' );
+
+    var srcPos = source._private.position;
+    var tgtPos = target._private.position;
     
     var tgtArShape = edge._private.style['target-arrow-shape'].value;
     var srcArShape = edge._private.style['source-arrow-shape'].value;
@@ -1365,8 +1373,8 @@
       var cp = [rs.cp2cx, rs.cp2cy];
       
       intersect = CanvasRenderer.nodeShapes[this.getNodeShape(target)].intersectLine(
-        target._private.position.x,
-        target._private.position.y,
+        tgtPos.x,
+        tgtPos.y,
         this.getNodeWidth(target),
         this.getNodeHeight(target),
         cp[0],
@@ -1388,8 +1396,8 @@
       var cp = [rs.cp2ax, rs.cp2ay];
 
       intersect = CanvasRenderer.nodeShapes[this.getNodeShape(source)].intersectLine(
-        source._private.position.x,
-        source._private.position.y,
+        srcPos.x,
+        srcPos.y,
         this.getNodeWidth(source),
         this.getNodeHeight(source),
         cp[0], //halfPointX,
@@ -1412,12 +1420,12 @@
     } else if (rs.edgeType == 'straight') {
     
       intersect = CanvasRenderer.nodeShapes[this.getNodeShape(target)].intersectLine(
-        target._private.position.x,
-        target._private.position.y,
+        tgtPos.x,
+        tgtPos.y,
         this.getNodeWidth(target),
         this.getNodeHeight(target),
-        source.position().x,
-        source.position().y,
+        srcPos.x,
+        srcPos.y,
         tgtBorderW / 2);
         
       if (intersect.length === 0) {
@@ -1428,10 +1436,10 @@
       }
       
       var arrowEnd = $$.math.shortenIntersection(intersect,
-        [source.position().x, source.position().y],
+        [srcPos.x, srcPos.y],
         CanvasRenderer.arrowShapes[tgtArShape].spacing(edge));
       var edgeEnd = $$.math.shortenIntersection(intersect,
-        [source.position().x, source.position().y],
+        [srcPos.x,srcPos.y],
         CanvasRenderer.arrowShapes[tgtArShape].gap(edge));
 
       rs.endX = edgeEnd[0];
@@ -1440,13 +1448,21 @@
       rs.arrowEndX = arrowEnd[0];
       rs.arrowEndY = arrowEnd[1];
     
+      var dir = [rs.arrowEndX - tgtPos.x, rs.arrowEndY - tgtPos.y];
+      var dirL = Math.sqrt( dir[0]*dir[0] + dir[1]*dir[1] );
+      var dirN = [ dir[0]/dirL, dir[1]/dirL ]; // normalised
+      var dirH = [ dirN[0]*tgtArrowH/2, dirN[1]*tgtArrowH/2 ];
+
+      rs.arrowEndXMid = dirH[0] + rs.arrowEndX;
+      rs.arrowEndYMid = dirH[1] + rs.arrowEndY;
+
       intersect = CanvasRenderer.nodeShapes[this.getNodeShape(source)].intersectLine(
-        source._private.position.x,
-        source._private.position.y,
+        srcPos.x,
+        srcPos.y,
         this.getNodeWidth(source),
         this.getNodeHeight(source),
-        target.position().x,
-        target.position().y,
+        tgtPos.x,
+        tgtPos.y,
         srcBorderW / 2);
       
       if (intersect.length === 0) {
@@ -1462,10 +1478,10 @@
           srcArShape);
       */
       var arrowStart = $$.math.shortenIntersection(intersect,
-        [target.position().x, target.position().y],
+        [tgtPos.x, tgtPos.y],
         CanvasRenderer.arrowShapes[srcArShape].spacing(edge));
       var edgeStart = $$.math.shortenIntersection(intersect,
-        [target.position().x, target.position().y],
+        [tgtPos.x, tgtPos.y],
         CanvasRenderer.arrowShapes[srcArShape].gap(edge));
 
       rs.startX = edgeStart[0];
@@ -1480,8 +1496,8 @@
       
       intersect = CanvasRenderer.nodeShapes[
         this.getNodeShape(target)].intersectLine(
-        target._private.position.x,
-        target._private.position.y,
+        tgtPos.x,
+        tgtPos.y,
         this.getNodeWidth(target),
         this.getNodeHeight(target),
         cp[0], //halfPointX,
@@ -1507,8 +1523,8 @@
       
       intersect = CanvasRenderer.nodeShapes[
         this.getNodeShape(source)].intersectLine(
-        source._private.position.x,
-        source._private.position.y,
+        srcPos.x,
+        srcPos.y,
         this.getNodeWidth(source),
         this.getNodeHeight(source),
         cp[0], //halfPointX,
@@ -1565,18 +1581,37 @@
     return adjacentEdges;
   };
 
-  CanvasRenderer.prototype.getArrowWidth = CanvasRenderer.prototype.getArrowHeight = function(edgeWidth) {
+  CanvasRenderer.prototype.getArrowWidth = CanvasRenderer.prototype.getArrowHeight = function( edge ) {
     var cache = this.arrowWidthCache = this.arrowWidthCache || {};
 
-    var cachedVal = cache[edgeWidth];
+    var style = edge._private.style;
+    var edgeWidth = style['width'].pxValue;
+    var arrowMult = style['edge-arrow-multiplier'].value;
+    var cacheKey = edgeWidth + '-' + arrowMult;
+
+    var cachedVal = cache[cacheKey];
     if( cachedVal ){
       return cachedVal;
     }
 
-    cachedVal =  Math.max(Math.pow(edgeWidth * 13.37, 0.9), 29);
-    cache[edgeWidth] = cachedVal;
+    cachedVal =  Math.max(Math.pow(edgeWidth * 13.37, 0.9), 29) * arrowMult;
+    cache[cacheKey] = cachedVal;
 
     return cachedVal;
+  };
+
+  CanvasRenderer.prototype.getDrawnArrowWidth = function( edge, whichArrow ){
+    var shapeName = edge._private.style[ whichArrow + '-arrow-shape' ].value;
+    var shapeImpl = CanvasRenderer.arrowShapes[ shapeName ];
+
+    return this.getArrowWidth( edge ) * shapeImpl.relativeWidth;
+  };
+
+  CanvasRenderer.prototype.getDrawnArrowHeight = function( edge, whichArrow ){
+    var shapeName = edge._private.style[ whichArrow + '-arrow-shape' ].value;
+    var shapeImpl = CanvasRenderer.arrowShapes[ shapeName ];
+
+    return this.getArrowHeight( edge ) * shapeImpl.relativeHeight;
   };
 
 

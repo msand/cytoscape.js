@@ -348,7 +348,7 @@
       angle = - (Math.PI / 2 + angle);
     }
     
-    var size = this.getArrowWidth( edgeWidth );
+    var size = this.getArrowWidth( edge );
     var shapeImpl = CanvasRenderer.arrowShapes[shape];
 
     // context.translate(x, y);

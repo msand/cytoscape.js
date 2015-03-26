@@ -18,11 +18,18 @@
   // spacing: dist(arrowTip, nodeBoundary)
   // gap: dist(edgeTip, nodeBoundary), edgeTip may != arrowTip
 
+  var cos45 = Math.cos( Math.PI/4 );
+
   var bbCollide = function(x, y, centerX, centerY, width, height, direction, padding){
-    var x1 = centerX - width/2;
-    var x2 = centerX + width/2;
-    var y1 = centerY - height/2;
-    var y2 = centerY + height/2;
+    // NB : cos(45deg) gives worst case bounding box w.r.t. rotation; approx 0.707 with regular bb at 0.5
+
+    var hw = width * cos45;
+    var hh = height * cos45;
+
+    var x1 = centerX - hw;
+    var x2 = centerX + hw;
+    var y1 = centerY - hh;
+    var y2 = centerY + hh;
 
     return (x1 <= x && x <= x2) && (y1 <= y && y <= y2);
   };
@@ -273,7 +280,7 @@
     },
     
     spacing: function(edge) {
-      return rendFunc.getArrowWidth(edge._private.style['width'].pxValue)
+      return rendFunc.getArrowWidth( edge )
         * arrowShapes['circle']._baseRadius;
     },
     
@@ -290,6 +297,9 @@
       0.25, 0
     ],
     
+    relativeWidth: 0.5,
+    relativeHeight: 0.1,
+
     collide: function(x, y, centerX, centerY, width, height, direction, padding) {
       var points = arrowShapes['inhibitor']._points;
       
@@ -327,6 +337,9 @@
       0.15, -0.3,
       -0.15, -0.3
     ],
+
+    relativeWidth: 0.3,
+    relativeHeight: 0.3,
     
     collide: function(x, y, centerX, centerY, width, height, direction, padding) {
       var points = arrowShapes['square']._points;
